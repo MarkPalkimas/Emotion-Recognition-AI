@@ -422,5 +422,158 @@
             }
         });
     </script>
+    // Add this script tag in your HTML head section, after the TensorFlow imports
+<script type="module">
+    import TherapeuticHandler from './therapeutic-handler.js';
+    
+    // Initialize the therapeutic handler
+    const therapist = new TherapeuticHandler();
+    let conversationActive = false;
+    let lastResponse = null;
+
+    // Modify your existing analyzeEmotion function
+    async function analyzeEmotion() {
+        const textInput = document.getElementById('textInput');
+        const result = document.getElementById('result');
+        const loading = document.getElementById('loading');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const text = textInput.value.trim();
+
+        if (!text) {
+            result.innerHTML = 'Please share how you're feeling.';
+            return;
+        }
+
+        // Show loading state
+        loading.style.display = 'block';
+        analyzeBtn.disabled = true;
+        result.innerHTML = '';
+
+        try {
+            // Get therapeutic analysis
+            const therapeuticResult = await therapist.analyzeInput(text);
+
+            // Handle emergency situations
+            if (therapeuticResult.emergencyResources) {
+                result.innerHTML = `
+                    <div class="emergency-alert">
+                        ${therapeuticResult.response}
+                        <div class="emergency-resources">
+                            Emergency Resources:
+                            <ul>
+                                <li>Emergency Services: 911</li>
+                                <li>National Suicide Prevention Lifeline: 1-800-273-8255</li>
+                                <li>Crisis Text Line: Text HOME to 741741</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Display therapeutic response
+                result.innerHTML = `
+                    <div class="response-container">
+                        <p class="therapeutic-response">${therapeuticResult.response}</p>
+                        ${therapeuticResult.medicalAdvice ? `
+                            <div class="medical-advice">
+                                <h4>Self-Help Suggestions:</h4>
+                                <ul>
+                                    ${therapeuticResult.medicalAdvice.selfHelp.map(tip => `<li>${tip}</li>`).join('')}
+                                </ul>
+                                ${therapeuticResult.recommendProfessional ? `
+                                    <div class="professional-recommendation">
+                                        <h4>When to Seek Professional Help:</h4>
+                                        <ul>
+                                            ${therapeuticResult.medicalAdvice.seekHelpIf.map(condition => `<li>${condition}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // Update emotion chart with detected emotions
+            updateEmotionChart(therapeuticResult.emotions);
+
+            // Clear input and prepare for continued conversation
+            textInput.value = '';
+            conversationActive = true;
+            lastResponse = therapeuticResult;
+
+        } catch (error) {
+            result.innerHTML = 'I apologize, but I'm having trouble processing that. Could you try rephrasing?';
+            console.error('Analysis error:', error);
+        }
+
+        // Reset UI state
+        loading.style.display = 'none';
+        analyzeBtn.disabled = false;
+    }
+
+    // Add this to your existing styles
+    const newStyles = `
+        .emergency-alert {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .emergency-resources {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .therapeutic-response {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .medical-advice {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .medical-advice h4 {
+            color: #64ffda;
+            margin-bottom: 0.5rem;
+        }
+
+        .medical-advice ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .medical-advice li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .medical-advice li:before {
+            content: "•";
+            color: #64ffda;
+            position: absolute;
+            left: 0.5rem;
+        }
+
+        .professional-recommendation {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    `;
+
+    // Add the new styles to the document
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = newStyles;
+    document.head.appendChild(styleSheet);
+</script>
 </body>
 </html>
