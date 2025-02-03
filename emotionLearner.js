@@ -1,10 +1,7 @@
 // emotionLearner.js
-// A simple emotion learner that uses keyword patterns and adjusts weights based on feedback.
-
 export default class EmotionLearner {
   constructor() {
-    // Default patterns and weights.
-    // In a production system, these could be loaded from a database.
+    // Default patterns with keywords and weights.
     this.patterns = {
       joy: {
         keywords: ['happy', 'joyful', 'delighted', 'pleased', 'content'],
@@ -21,20 +18,30 @@ export default class EmotionLearner {
       fear: {
         keywords: ['scared', 'afraid', 'frightened', 'nervous', 'anxious'],
         weight: 1.0
+      },
+      surprise: {
+        keywords: ['surprised', 'shocked', 'amazed', 'stunned'],
+        weight: 1.0
+      },
+      love: {
+        keywords: ['love', 'adore', 'cherish', 'fond'],
+        weight: 1.0
+      },
+      anxiety: {
+        keywords: ['anxiety', 'anxious', 'worry', 'nervous'],
+        weight: 1.0
       }
-      // Extend with more emotions and keywords as needed.
     };
 
-    // Load any previously saved adjustments from localStorage
     this.loadAdjustments();
   }
 
+  // Load previously saved weights from localStorage.
   loadAdjustments() {
     const saved = localStorage.getItem('emotionAdjustments');
     if (saved) {
       try {
         const adjustments = JSON.parse(saved);
-        // Merge saved adjustments into our patterns
         for (const emotion in adjustments) {
           if (this.patterns[emotion]) {
             this.patterns[emotion].weight = adjustments[emotion];
@@ -46,6 +53,7 @@ export default class EmotionLearner {
     }
   }
 
+  // Save current weights to localStorage.
   saveAdjustments() {
     const adjustments = {};
     for (const emotion in this.patterns) {
@@ -54,12 +62,11 @@ export default class EmotionLearner {
     localStorage.setItem('emotionAdjustments', JSON.stringify(adjustments));
   }
 
-  // Analyze the given text and return a normalized emotion score object.
+  // Detect emotions by scanning the text for keyword occurrences.
   detectEmotions(text) {
     const words = text.toLowerCase().split(/\s+/);
     const scores = {};
 
-    // For each emotion, look for matching keywords.
     for (const [emotion, data] of Object.entries(this.patterns)) {
       let score = 0;
       data.keywords.forEach(keyword => {
@@ -72,7 +79,7 @@ export default class EmotionLearner {
       }
     }
 
-    // Normalize scores to sum to 1
+    // Normalize scores so they sum to 1.
     const total = Object.values(scores).reduce((sum, s) => sum + s, 0);
     if (total > 0) {
       for (const emotion in scores) {
@@ -82,15 +89,13 @@ export default class EmotionLearner {
     return scores;
   }
 
-  // Update internal weights based on feedback.
-  // If positive feedback: increase the weight of emotions that were detected.
-  // If negative: decrease them slightly.
+  // Update internal weights based on user feedback.
   updateWeights(emotions, isPositiveFeedback) {
     const factor = isPositiveFeedback ? 1.05 : 0.95;
     for (const emotion in emotions) {
       if (this.patterns[emotion]) {
         this.patterns[emotion].weight *= factor;
-        // Clamp weights to a reasonable range
+        // Clamp weights between 0.5 and 2.0.
         this.patterns[emotion].weight = Math.min(Math.max(this.patterns[emotion].weight, 0.5), 2.0);
       }
     }
