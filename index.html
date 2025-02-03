@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Emotion Therapist</title>
-  <!-- Load TensorFlow.js and Universal Sentence Encoder -->
+  <title>Ultimate AI Emotion Therapist</title>
+  <!-- Load TensorFlow.js and the Universal Sentence Encoder -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.7.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
   <style>
-    /* Base and container styles */
+    /* Reset & Basic Styles */
     * {
       margin: 0;
       padding: 0;
@@ -110,17 +110,11 @@
       background: #ffcc00;
       color: #1a1a2e;
     }
-    /* Additional animated waves for loading (if needed) */
-    .loading {
-      display: none;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>AI Emotion Therapist</h1>
+    <h1>Ultimate AI Emotion Therapist</h1>
     <textarea id="textInput" placeholder="Share your thoughts..."></textarea>
     <button id="analyzeBtn">Analyze &amp; Respond</button>
     <div id="result"></div>
@@ -132,7 +126,7 @@
   <script type="module">
     import TherapeuticHandler from './therapeuticHandler.js';
 
-    // Initialize the therapeutic handler.
+    // Initialize our therapeutic handler.
     const therapist = new TherapeuticHandler();
 
     // UI element references.
@@ -176,6 +170,7 @@
         surprise: '#00FF7F',
         love: '#FF69B4',
         anxiety: '#FFA500',
+        disgust: '#32CD32',
         default: '#64ffda'
       };
       return colors[emotion] || colors.default;
@@ -187,7 +182,7 @@
       window.speechSynthesis.speak(utterance);
     }
 
-    // Analyze & respond when the button is clicked.
+    // When the user clicks “Analyze & Respond”.
     analyzeBtn.addEventListener('click', async () => {
       const userText = textInput.value.trim();
       if (!userText) {
@@ -198,7 +193,7 @@
       resultDiv.innerHTML = '<p>Analyzing...</p>';
       feedbackDiv.innerHTML = '';
 
-      // Get analysis from the therapeutic handler.
+      // Get analysis from our therapeutic handler.
       const analysis = await therapist.analyzeInput(userText);
       const { response, emotions, riskLevel } = analysis;
 
@@ -207,7 +202,7 @@
       if (riskLevel === 'severe') {
         responseHTML += `
           <div style="margin-top:1rem; padding:1rem; background: rgba(255,0,0,0.1); border: 2px solid #ff4444; border-radius:8px;">
-            <strong>Emergency Alert:</strong> If you are in immediate danger or feel unsafe, please call your local emergency services immediately.
+            <strong>Emergency Alert:</strong> If you are in immediate danger or feel unsafe, please call emergency services immediately.
           </div>
         `;
       }
@@ -225,8 +220,6 @@
         <button id="feedbackYes">Yes</button>
         <button id="feedbackNo">No</button>
       `;
-
-      // Handle feedback.
       document.getElementById('feedbackYes').addEventListener('click', () => {
         therapist.provideFeedback(userText, analysis, true);
         feedbackDiv.innerHTML = '<p>Thanks for your feedback!</p>';
@@ -241,7 +234,7 @@
       analyzeBtn.disabled = false;
     });
 
-    // Enable Enter key (without shift) to trigger analysis.
+    // Allow pressing Enter (without Shift) to trigger analysis.
     textInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
