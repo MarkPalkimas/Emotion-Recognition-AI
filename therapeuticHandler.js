@@ -5,7 +5,9 @@ export default class TherapeuticHandler {
   constructor() {
     this.learner = new EmotionLearner();
     this.conversationHistory = [];
-    // Predefined responses for each emotion and intensity level.
+    this.mlModel = null;      // Will hold the loaded TensorFlow.js model (if available)
+    this.encoder = null;      // Universal Sentence Encoder
+    // Predefined therapeutic responses.
     this.responses = {
       joy: {
         mild: [
@@ -58,11 +60,49 @@ export default class TherapeuticHandler {
         severe: [
           "Your fear is very pronounced. If these feelings persist, please consider reaching out to a trusted professional or a support service immediately."
         ]
+      },
+      surprise: {
+        mild: [
+          "You seem a bit surprised. Would you like to talk more about it?",
+          "Surprises can be unsettling sometimes. I'm here to help."
+        ],
+        moderate: [
+          "I sense that something unexpected happened. Do you want to share more about it?",
+          "It sounds like you're still processing the surprise. Let's talk about it."
+        ],
+        severe: [
+          "The surprise seems to have really shaken you. If you feel overwhelmed, please consider seeking support."
+        ]
+      },
+      love: {
+        mild: [
+          "I sense warmth in your words.",
+          "It's nice to feel loved. Keep cherishing those moments."
+        ],
+        moderate: [
+          "Your words radiate love and care. It’s a beautiful emotion.",
+          "The love you express is evident. Thank you for sharing it."
+        ],
+        severe: [
+          "Your deep feelings of love shine through. It’s important to nurture these emotions."
+        ]
+      },
+      anxiety: {
+        mild: [
+          "A bit of worry is natural. Would you like to discuss what’s on your mind?",
+          "I can sense some anxiety. Let’s see if we can find a way to ease it."
+        ],
+        moderate: [
+          "I understand that anxiety can be challenging. Would you like some strategies to help manage it?",
+          "Your anxiety seems to be affecting you. I'm here to help you explore some calming techniques."
+        ],
+        severe: [
+          "Your anxiety is very pronounced. If it continues to overwhelm you, please consider reaching out to a professional."
+        ]
       }
-      // You can add more emotions and responses as needed.
     };
 
-    // Fallback response if no emotion is clearly detected.
+    // Fallback general responses.
     this.generalResponses = {
       mild: [
         "Thanks for sharing your thoughts.",
@@ -74,62 +114,107 @@ export default class TherapeuticHandler {
       ],
       severe: [
         "I'm really concerned about what you're going through. It might help to talk to someone who can offer deeper support.",
-        "Your feelings are important. Please consider reaching out to a trusted professional or a crisis service."
+        "Your feelings are important. Please consider reaching out to a trusted professional or crisis service."
       ]
     };
   }
 
+  // Load the ML model and the Universal Sentence Encoder.
+  async loadMLComponents() {
+    try {
+      // Load the Universal Sentence Encoder.
+      this.encoder = await use.load();
+      // Attempt to load a pre-trained TensorFlow.js model (update URL accordingly).
+      this.mlModel = await tf.loadLayersModel('https://raw.githubusercontent.com/your-username/your-repo/main/model/model.json');
+    } catch (error) {
+      console.error('Error loading ML components:', error);
+      this.mlModel = null; // Fallback to rule-based learner.
+    }
+  }
+
   // Main method called by the UI.
   async analyzeInput(text) {
-    // Detect emotions using our learner.
-    const detectedEmotions = this.learner.detectEmotions(text);
-    // Save to conversation history.
-    this.conversationHistory.push({ text, detectedEmotions, timestamp: new Date() });
+    // Check if ML components are loaded; if not, try to load them.
+    if (!this.encoder || !this.mlModel) {
+      await this.loadMLComponents();
+    }
 
-    // Determine risk level based on strong signals or concerning keywords.
-    const riskLevel = this.assessRisk(text, detectedEmotions);
+    // Get ML-based emotions if available.
+    let mlEmotions = {};
+    if (this.encoder && this.mlModel) {
+      try {
+        const embeddings = await this.encoder.embed([text]);
+        const predictions = await this.mlModel.predict(embeddings).data();
+        // Assuming a fixed order of emotions for the ML model.
+        const emotionList = ['joy', 'sadness', 'anger', 'fear', 'surprise', 'love', 'anxiety'];
+        mlEmotions = emotionList.reduce((obj, emotion, i) => {
+          obj[emotion] = predictions[i];
+          return obj;
+        }, {});
+      } catch (e) {
+        console.error('Error during ML model prediction:', e);
+      }
+    }
 
-    // Determine dominant emotion.
-    const dominantEntry = Object.entries(detectedEmotions).sort((a, b) => b[1] - a[1])[0];
+    // Get rule-based emotions.
+    const ruleEmotions = this.learner.detectEmotions(text);
+    // Combine the two sets of scores (simple average).
+    const combinedEmotions = this.combineEmotionScores(mlEmotions, ruleEmotions);
+
+    // Save conversation history.
+    this.conversationHistory.push({ text, emotions: combinedEmotions, timestamp: new Date() });
+
+    // Assess risk.
+    const riskLevel = this.assessRisk(text, combinedEmotions);
+
+    // Determine dominant emotion and intensity.
+    const dominantEntry = Object.entries(combinedEmotions).sort((a, b) => b[1] - a[1])[0];
     const dominantEmotion = dominantEntry ? dominantEntry[0] : null;
     const intensity = dominantEntry
       ? (dominantEntry[1] > 0.7 ? 'severe' : dominantEntry[1] > 0.4 ? 'moderate' : 'mild')
       : 'mild';
 
-    // Choose an appropriate response.
+    // Generate an appropriate response.
     let response = '';
     if (riskLevel === 'severe') {
-      response = "I'm very concerned about your well-being. If you feel unsafe or in crisis, please call emergency services immediately.";
+      response = "I'm very concerned about your well-being. If you feel unsafe or are in crisis, please call emergency services immediately.";
     } else if (dominantEmotion && this.responses[dominantEmotion]) {
       const options = this.responses[dominantEmotion][intensity] || [];
       response = options[Math.floor(Math.random() * options.length)];
     } else {
-      // Fallback general response.
       const options = this.generalResponses[intensity];
       response = options[Math.floor(Math.random() * options.length)];
     }
 
-    return { response, emotions: detectedEmotions, riskLevel, dominantEmotion, intensity };
+    return { response, emotions: combinedEmotions, riskLevel, dominantEmotion, intensity };
   }
 
-  // A simple risk assessment based on keywords and strong emotion signals.
+  // Combine ML and rule-based scores (simple average; adjust weights if needed).
+  combineEmotionScores(mlScores, ruleScores) {
+    const combined = {};
+    const emotions = new Set([...Object.keys(mlScores), ...Object.keys(ruleScores)]);
+    emotions.forEach(emotion => {
+      combined[emotion] = ((mlScores[emotion] || 0) + (ruleScores[emotion] || 0)) / 2;
+    });
+    return combined;
+  }
+
+  // Basic risk assessment based on keywords and strong emotion signals.
   assessRisk(text, emotions) {
     const concerningWords = ['suicide', 'kill', 'die', 'end it all', 'hopeless'];
     if (concerningWords.some(word => text.toLowerCase().includes(word))) {
       return 'severe';
     }
-    // If any emotion’s normalized score is very high, that may be concerning.
     for (const score of Object.values(emotions)) {
       if (score > 0.9) return 'severe';
     }
     return 'low';
   }
 
-  // Called by the UI when the user gives feedback on the response.
+  // Called when the user gives feedback.
   provideFeedback(text, analysis, isPositive) {
-    // Let the learner update its internal weights for the detected emotions.
+    // Update the rule-based learner's weights.
     this.learner.updateWeights(analysis.emotions, isPositive);
-    // Optionally, you could also log feedback or adjust your response strategies further.
     console.log("Feedback received. Updated emotion weights:", this.learner.patterns);
   }
 }
