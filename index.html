@@ -1,579 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Emotion Analyzer</title>
-    <!-- Load TensorFlow.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.7.0/tf.min.js"></script>
-    <!-- Load use-model helper -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 20px;
-            color: #fff;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 2rem;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        h1 {
-            color: #fff;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            font-size: 2rem;
-        }
-
-        .status {
-            text-align: center;
-            margin-bottom: 1rem;
-            color: #64ffda;
-        }
-
-        .input-container {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            font-size: 1rem;
-            min-height: 150px;
-            resize: vertical;
-            margin-bottom: 1rem;
-            background: rgba(255,255,255,0.05);
-            color: #fff;
-            transition: all 0.3s ease;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: #64ffda;
-            background: rgba(255,255,255,0.1);
-        }
-
-        button {
-            width: 100%;
-            padding: 1rem;
-            background: #64ffda;
-            color: #1a1a2e;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background: #4cd7b7;
-            transform: translateY(-2px);
-        }
-
-        button:disabled {
-            background: #2c4c47;
-            color: rgba(255,255,255,0.5);
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        #result {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            text-align: left;
-        }
-
-        .emotion-chart {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-        }
-
-        .emotion-bar {
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .emotion-label {
-            width: 100px;
-            text-align: right;
-            color: #64ffda;
-        }
-
-        .bar-container {
-            flex-grow: 1;
-            height: 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .bar {
-            height: 100%;
-            width: 0%;
-            transition: width 1s ease;
-            border-radius: 10px;
-        }
-
-        .score {
-            width: 60px;
-            text-align: right;
-            color: #64ffda;
-        }
-
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-        }
-
-        .waves {
-            display: flex;
-            gap: 5px;
-        }
-
-        .wave {
-            width: 4px;
-            height: 20px;
-            background: #64ffda;
-            animation: wave 1s ease-in-out infinite;
-        }
-
-        @keyframes wave {
-            0%, 100% { transform: scaleY(0.5); }
-            50% { transform: scaleY(1.5); }
-        }
-
-        .wave:nth-child(2) { animation-delay: 0.1s; }
-        .wave:nth-child(3) { animation-delay: 0.2s; }
-        .wave:nth-child(4) { animation-delay: 0.3s; }
-        .wave:nth-child(5) { animation-delay: 0.4s; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Emotion Therapist</title>
+  <style>
+    /* Basic styles for a modern, neat interface */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 1rem;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      margin-bottom: 1rem;
+      resize: vertical;
+    }
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: #64ffda;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    button:hover {
+      transform: translateY(-2px);
+    }
+    #result {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+    .emotion-chart {
+      margin-top: 1rem;
+    }
+    .emotion-bar {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .emotion-label {
+      width: 100px;
+      text-align: right;
+      color: #64ffda;
+    }
+    .bar-container {
+      flex-grow: 1;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      transition: width 1s ease;
+      border-radius: 10px;
+    }
+    .score {
+      width: 60px;
+      text-align: right;
+      color: #64ffda;
+    }
+    .feedback {
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .feedback button {
+      margin: 0 0.5rem;
+      background: #ffcc00;
+      color: #1a1a2e;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>AI Emotion Analyzer</h1>
-        <div id="status" class="status">Loading AI model...</div>
-        <div class="input-container">
-            <textarea id="textInput" placeholder="Enter your text here..." disabled></textarea>
-            <button id="analyzeBtn" onclick="analyzeEmotion()" disabled>Analyze Emotions</button>
-            <div id="loading" class="loading">
-                <div class="waves">
-                    <div class="wave"></div>
-                    <div class="wave"></div>
-                    <div class="wave"></div>
-                    <div class="wave"></div>
-                    <div class="wave"></div>
-                </div>
-            </div>
-        </div>
-        <div id="result"></div>
-        <div id="emotionChart" class="emotion-chart"></div>
-    </div>
+  <div class="container">
+    <h1>AI Emotion Therapist</h1>
+    <textarea id="textInput" placeholder="Share your thoughts..."></textarea>
+    <button id="analyzeBtn">Analyze &amp; Respond</button>
+    <div id="result"></div>
+    <div id="emotionChart" class="emotion-chart"></div>
+    <div id="feedback" class="feedback"></div>
+  </div>
 
-    <script>
-        let model;
-        let encoder;
-        const emotions = [
-            'joy', 'sadness', 'anger', 'fear', 'surprise', 
-            'love', 'disgust', 'anxiety', 'admiration', 'approval',
-            'caring', 'confusion', 'curiosity', 'desire', 'disappointment',
-            'disapproval', 'embarrassment', 'excitement', 'gratitude', 'grief',
-            'nervousness', 'optimism', 'pride', 'realization', 'relief',
-            'remorse', 'skepticism', 'neutral'
-        ];
+  <!-- Load our ES6 modules -->
+  <script type="module">
+    import TherapeuticHandler from './therapeuticHandler.js';
 
-        async function loadModel() {
-            try {
-                // Load Universal Sentence Encoder
-                encoder = await use.load();
-                
-                // Create our emotion classification model
-                model = await tf.loadLayersModel('https://raw.githubusercontent.com/your-username/your-repo/main/model/model.json');
-                
-                // Enable UI elements
-                document.getElementById('textInput').disabled = false;
-                document.getElementById('analyzeBtn').disabled = false;
-                document.getElementById('status').textContent = 'AI Model Ready';
-                
-            } catch (error) {
-                console.error('Error loading model:', error);
-                document.getElementById('status').textContent = 'Error loading AI model. Using fallback analysis.';
-                // Enable UI anyway - we'll use fallback analysis
-                document.getElementById('textInput').disabled = false;
-                document.getElementById('analyzeBtn').disabled = false;
-            }
-        }
-
-        // Initialize
-        loadModel();
-
-        // Fallback emotion analysis using transformer-like attention
-        function fallbackAnalysis(text) {
-            // Tokenize the text
-            const tokens = text.toLowerCase().split(/\s+/);
-            
-            // Simple attention mechanism
-            const emotions = {};
-            let maxScore = 0;
-            
-            // Process each token with context
-            for (let i = 0; i < tokens.length; i++) {
-                const token = tokens[i];
-                const prevToken = i > 0 ? tokens[i-1] : '';
-                const nextToken = i < tokens.length - 1 ? tokens[i+1] : '';
-                
-                // Calculate emotional weight with context
-                const contextScore = getEmotionalWeight(token, prevToken, nextToken);
-                
-                for (const [emotion, score] of Object.entries(contextScore)) {
-                    emotions[emotion] = (emotions[emotion] || 0) + score;
-                    maxScore = Math.max(maxScore, emotions[emotion]);
-                }
-            }
-            
-            // Normalize scores
-            for (const emotion in emotions) {
-                emotions[emotion] = emotions[emotion] / maxScore;
-            }
-            
-            return emotions;
-        }
-
-        function getEmotionalWeight(token, prevToken, nextToken) {
-            const weights = {};
-            
-            // Emotional patterns with context
-            const patterns = {
-                joy: {
-                    single: ['happy', 'joy', 'wonderful', 'great', 'excellent'],
-                    intensifiers: ['very', 'so', 'really', 'extremely'],
-                    context: ['feeling', 'am', 'is', 'are']
-                },
-                sadness: {
-                    single: ['sad', 'unhappy', 'depressed', 'miserable', 'down'],
-                    intensifiers: ['deeply', 'very', 'so', 'really'],
-                    context: ['feeling', 'am', 'is', 'are']
-                },
-                // Add more patterns for other emotions...
-            };
-            
-            for (const [emotion, pattern] of Object.entries(patterns)) {
-                let score = 0;
-                
-                // Check single word
-                if (pattern.single.includes(token)) {
-                    score += 1;
-                }
-                
-                // Check intensifiers
-                if (pattern.intensifiers.includes(prevToken)) {
-                    score += 0.5;
-                }
-                
-                // Check context
-                if (pattern.context.includes(prevToken) || pattern.context.includes(nextToken)) {
-                    score += 0.3;
-                }
-                
-                if (score > 0) {
-                    weights[emotion] = score;
-                }
-            }
-            
-            return weights;
-        }
-
-        async function analyzeEmotion() {
-            const textInput = document.getElementById('textInput');
-            const result = document.getElementById('result');
-            const loading = document.getElementById('loading');
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            const text = textInput.value.trim();
-
-            if (!text) {
-                result.innerHTML = 'Please enter some text first.';
-                return;
-            }
-
-            // Show loading state
-            loading.style.display = 'block';
-            analyzeBtn.disabled = true;
-            result.innerHTML = '';
-
-            try {
-                let emotionScores;
-
-                if (encoder && model) {
-                    // Use the AI model
-                    const embeddings = await encoder.embed([text]);
-                    const predictions = await model.predict(embeddings).data();
-                    
-                    emotionScores = {};
-                    emotions.forEach((emotion, i) => {
-                        emotionScores[emotion] = predictions[i];
-                    });
-                } else {
-                    // Use fallback analysis
-                    emotionScores = fallbackAnalysis(text);
-                }
-
-                // Sort emotions by score
-                const sortedEmotions = Object.entries(emotionScores)
-                    .sort(([,a], [,b]) => b - a);
-
-                // Display results
-                const primaryEmotion = sortedEmotions[0][0];
-                const primaryScore = sortedEmotions[0][1];
-
-                result.innerHTML = `
-                    <h3 style="color: #64ffda; margin-bottom: 1rem;">Analysis Results</h3>
-                    <p>Primary emotion: <strong>${primaryEmotion}</strong> (${(primaryScore * 100).toFixed(1)}% confidence)</p>
-                `;
-
-                // Update emotion chart
-                updateEmotionChart(emotionScores);
-
-            } catch (error) {
-                result.innerHTML = 'Error analyzing emotions. Please try again.';
-                console.error('Analysis error:', error);
-            }
-
-            // Reset UI state
-            loading.style.display = 'none';
-            analyzeBtn.disabled = false;
-        }
-
-        function updateEmotionChart(scores) {
-            const chartDiv = document.getElementById('emotionChart');
-            const sortedEmotions = Object.entries(scores)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 8); // Show top 8 emotions
-
-            const chartHTML = sortedEmotions.map(([emotion, score]) => `
-                <div class="emotion-bar">
-                    <div class="emotion-label">${emotion}</div>
-                    <div class="bar-container">
-                        <div class="bar" style="
-                            width: ${score * 100}%;
-                            background: ${getEmotionColor(emotion, score)};
-                        "></div>
-                    </div>
-                    <div class="score">${(score * 100).toFixed(1)}%</div>
-                </div>
-            `).join('');
-
-            chartDiv.innerHTML = chartHTML;
-        }
-
-        function getEmotionColor(emotion, intensity) {
-            const colors = {
-                joy: '#FFD700',
-                sadness: '#4169E1',
-                anger: '#FF4500',
-                fear: '#800080',
-                surprise: '#00FF7F',
-                love: '#FF69B4',
-                disgust: '#32CD32',
-                default: '#64ffda'
-            };
-
-            return colors[emotion] || colors.default;
-        }
-
-        // Add enter key support
-        document.getElementById('textInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                analyzeEmotion();
-            }
-        });
-    </script>
-    // Add this script tag in your HTML head section, after the TensorFlow imports
-<script type="module">
-    import TherapeuticHandler from './therapeutic-handler.js';
-    
-    // Initialize the therapeutic handler
+    // Initialize our therapeutic handler
     const therapist = new TherapeuticHandler();
-    let conversationActive = false;
-    let lastResponse = null;
 
-    // Modify your existing analyzeEmotion function
-    async function analyzeEmotion() {
-        const textInput = document.getElementById('textInput');
-        const result = document.getElementById('result');
-        const loading = document.getElementById('loading');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const text = textInput.value.trim();
+    // UI elements
+    const textInput = document.getElementById('textInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resultDiv = document.getElementById('result');
+    const emotionChartDiv = document.getElementById('emotionChart');
+    const feedbackDiv = document.getElementById('feedback');
 
-        if (!text) {
-            result.innerHTML = 'Please share how you're feeling.';
-            return;
-        }
+    // Function to update the emotion chart UI
+    function updateEmotionChart(scores) {
+      const sortedEmotions = Object.entries(scores)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 8); // top 8 emotions
 
-        // Show loading state
-        loading.style.display = 'block';
-        analyzeBtn.disabled = true;
-        result.innerHTML = '';
-
-        try {
-            // Get therapeutic analysis
-            const therapeuticResult = await therapist.analyzeInput(text);
-
-            // Handle emergency situations
-            if (therapeuticResult.emergencyResources) {
-                result.innerHTML = `
-                    <div class="emergency-alert">
-                        ${therapeuticResult.response}
-                        <div class="emergency-resources">
-                            Emergency Resources:
-                            <ul>
-                                <li>Emergency Services: 911</li>
-                                <li>National Suicide Prevention Lifeline: 1-800-273-8255</li>
-                                <li>Crisis Text Line: Text HOME to 741741</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // Display therapeutic response
-                result.innerHTML = `
-                    <div class="response-container">
-                        <p class="therapeutic-response">${therapeuticResult.response}</p>
-                        ${therapeuticResult.medicalAdvice ? `
-                            <div class="medical-advice">
-                                <h4>Self-Help Suggestions:</h4>
-                                <ul>
-                                    ${therapeuticResult.medicalAdvice.selfHelp.map(tip => `<li>${tip}</li>`).join('')}
-                                </ul>
-                                ${therapeuticResult.recommendProfessional ? `
-                                    <div class="professional-recommendation">
-                                        <h4>When to Seek Professional Help:</h4>
-                                        <ul>
-                                            ${therapeuticResult.medicalAdvice.seekHelpIf.map(condition => `<li>${condition}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }
-
-            // Update emotion chart with detected emotions
-            updateEmotionChart(therapeuticResult.emotions);
-
-            // Clear input and prepare for continued conversation
-            textInput.value = '';
-            conversationActive = true;
-            lastResponse = therapeuticResult;
-
-        } catch (error) {
-            result.innerHTML = 'I apologize, but I'm having trouble processing that. Could you try rephrasing?';
-            console.error('Analysis error:', error);
-        }
-
-        // Reset UI state
-        loading.style.display = 'none';
-        analyzeBtn.disabled = false;
+      const chartHTML = sortedEmotions.map(([emotion, score]) => `
+        <div class="emotion-bar">
+          <div class="emotion-label">${emotion}</div>
+          <div class="bar-container">
+            <div class="bar" style="width: ${(score * 100).toFixed(1)}%; background: ${getEmotionColor(emotion)}"></div>
+          </div>
+          <div class="score">${(score * 100).toFixed(1)}%</div>
+        </div>
+      `).join('');
+      emotionChartDiv.innerHTML = chartHTML;
     }
 
-    // Add this to your existing styles
-    const newStyles = `
-        .emergency-alert {
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px solid #ff4444;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
+    // Helper: choose a color for an emotion
+    function getEmotionColor(emotion) {
+      const colors = {
+        joy: '#FFD700',
+        sadness: '#4169E1',
+        anger: '#FF4500',
+        fear: '#800080',
+        surprise: '#00FF7F',
+        love: '#FF69B4',
+        anxiety: '#FFA500',
+        default: '#64ffda'
+      };
+      return colors[emotion] || colors.default;
+    }
 
-        .emergency-resources {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
+    // When the user clicks “Analyze & Respond”
+    analyzeBtn.addEventListener('click', async () => {
+      const userText = textInput.value.trim();
+      if (!userText) {
+        resultDiv.innerHTML = '<p>Please share your thoughts so I can help.</p>';
+        return;
+      }
+      analyzeBtn.disabled = true;
+      resultDiv.innerHTML = '<p>Analyzing...</p>';
 
-        .therapeutic-response {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
+      // Get analysis from our therapeutic handler
+      const analysis = await therapist.analyzeInput(userText);
+      const { response, emotions, riskLevel } = analysis;
 
-        .medical-advice {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
+      // Display the response
+      let responseHTML = `<h3>Therapist Response</h3><p>${response}</p>`;
+      if (riskLevel === 'severe') {
+        responseHTML += `
+          <div style="margin-top:1rem; padding:1rem; background: rgba(255,0,0,0.1); border: 2px solid #ff4444; border-radius:8px;">
+            <strong>Emergency Alert:</strong> If you are in immediate danger or feeling unsafe, please call your local emergency services immediately.
+          </div>
+        `;
+      }
+      resultDiv.innerHTML = responseHTML;
 
-        .medical-advice h4 {
-            color: #64ffda;
-            margin-bottom: 0.5rem;
-        }
+      // Update the emotion chart
+      updateEmotionChart(emotions);
 
-        .medical-advice ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
+      // Offer simple feedback buttons to “learn” from the conversation.
+      feedbackDiv.innerHTML = `
+        <p>Was this response helpful?</p>
+        <button id="feedbackYes">Yes</button>
+        <button id="feedbackNo">No</button>
+      `;
 
-        .medical-advice li {
-            margin-bottom: 0.5rem;
-            padding-left: 1.5rem;
-            position: relative;
-        }
+      // Listen for feedback clicks. This will update our internal learner.
+      document.getElementById('feedbackYes').addEventListener('click', () => {
+        therapist.provideFeedback(userText, analysis, true);
+        feedbackDiv.innerHTML = '<p>Thanks for your feedback!</p>';
+      });
+      document.getElementById('feedbackNo').addEventListener('click', () => {
+        therapist.provideFeedback(userText, analysis, false);
+        feedbackDiv.innerHTML = '<p>Thanks for your feedback! I\'ll learn from this.</p>';
+      });
 
-        .medical-advice li:before {
-            content: "•";
-            color: #64ffda;
-            position: absolute;
-            left: 0.5rem;
-        }
-
-        .professional-recommendation {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
-    `;
-
-    // Add the new styles to the document
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = newStyles;
-    document.head.appendChild(styleSheet);
-</script>
+      textInput.value = '';
+      analyzeBtn.disabled = false;
+    });
+  </script>
 </body>
 </html>
