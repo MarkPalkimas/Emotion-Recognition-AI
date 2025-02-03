@@ -4,13 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Emotion Therapist</title>
+  <!-- Load TensorFlow.js and Universal Sentence Encoder -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.7.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
   <style>
-    /* Basic styles for a modern, neat interface */
+    /* Base and container styles */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
     body {
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -18,8 +21,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #fff;
       padding: 20px;
+      color: #fff;
     }
     .container {
       width: 100%;
@@ -33,14 +36,15 @@
     h1 {
       text-align: center;
       margin-bottom: 1.5rem;
+      font-size: 2rem;
     }
     textarea {
       width: 100%;
       min-height: 150px;
       padding: 1rem;
-      border: 2px solid rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255,255,255,0.1);
       border-radius: 8px;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255,255,255,0.05);
       color: #fff;
       margin-bottom: 1rem;
       resize: vertical;
@@ -106,6 +110,12 @@
       background: #ffcc00;
       color: #1a1a2e;
     }
+    /* Additional animated waves for loading (if needed) */
+    .loading {
+      display: none;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -118,39 +128,45 @@
     <div id="feedback" class="feedback"></div>
   </div>
 
-  <!-- Load our ES6 modules -->
+  <!-- Main Application Script -->
   <script type="module">
     import TherapeuticHandler from './therapeuticHandler.js';
 
-    // Initialize our therapeutic handler
+    // Initialize the therapeutic handler.
     const therapist = new TherapeuticHandler();
 
-    // UI elements
+    // UI element references.
     const textInput = document.getElementById('textInput');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const resultDiv = document.getElementById('result');
     const emotionChartDiv = document.getElementById('emotionChart');
     const feedbackDiv = document.getElementById('feedback');
 
-    // Function to update the emotion chart UI
+    // Helper function to update the emotion chart with animations.
     function updateEmotionChart(scores) {
       const sortedEmotions = Object.entries(scores)
         .sort(([, a], [, b]) => b - a)
-        .slice(0, 8); // top 8 emotions
+        .slice(0, 8); // Top 8 emotions
 
       const chartHTML = sortedEmotions.map(([emotion, score]) => `
         <div class="emotion-bar">
           <div class="emotion-label">${emotion}</div>
           <div class="bar-container">
-            <div class="bar" style="width: ${(score * 100).toFixed(1)}%; background: ${getEmotionColor(emotion)}"></div>
+            <div class="bar" style="width: 0%; background: ${getEmotionColor(emotion)}" data-target="${(score * 100).toFixed(1)}%"></div>
           </div>
           <div class="score">${(score * 100).toFixed(1)}%</div>
         </div>
       `).join('');
       emotionChartDiv.innerHTML = chartHTML;
+
+      // Animate the bars.
+      document.querySelectorAll('.bar').forEach(bar => {
+        const targetWidth = bar.getAttribute('data-target');
+        setTimeout(() => bar.style.width = targetWidth, 100);
+      });
     }
 
-    // Helper: choose a color for an emotion
+    // Helper: choose a color for an emotion.
     function getEmotionColor(emotion) {
       const colors = {
         joy: '#FFD700',
@@ -165,7 +181,13 @@
       return colors[emotion] || colors.default;
     }
 
-    // When the user clicks “Analyze & Respond”
+    // Voice integration: Speak out the response.
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Analyze & respond when the button is clicked.
     analyzeBtn.addEventListener('click', async () => {
       const userText = textInput.value.trim();
       if (!userText) {
@@ -174,33 +196,37 @@
       }
       analyzeBtn.disabled = true;
       resultDiv.innerHTML = '<p>Analyzing...</p>';
+      feedbackDiv.innerHTML = '';
 
-      // Get analysis from our therapeutic handler
+      // Get analysis from the therapeutic handler.
       const analysis = await therapist.analyzeInput(userText);
       const { response, emotions, riskLevel } = analysis;
 
-      // Display the response
+      // Build the response HTML.
       let responseHTML = `<h3>Therapist Response</h3><p>${response}</p>`;
       if (riskLevel === 'severe') {
         responseHTML += `
           <div style="margin-top:1rem; padding:1rem; background: rgba(255,0,0,0.1); border: 2px solid #ff4444; border-radius:8px;">
-            <strong>Emergency Alert:</strong> If you are in immediate danger or feeling unsafe, please call your local emergency services immediately.
+            <strong>Emergency Alert:</strong> If you are in immediate danger or feel unsafe, please call your local emergency services immediately.
           </div>
         `;
       }
       resultDiv.innerHTML = responseHTML;
 
-      // Update the emotion chart
+      // Speak the response aloud.
+      speak(response);
+
+      // Update the emotion chart.
       updateEmotionChart(emotions);
 
-      // Offer simple feedback buttons to “learn” from the conversation.
+      // Show feedback buttons.
       feedbackDiv.innerHTML = `
         <p>Was this response helpful?</p>
         <button id="feedbackYes">Yes</button>
         <button id="feedbackNo">No</button>
       `;
 
-      // Listen for feedback clicks. This will update our internal learner.
+      // Handle feedback.
       document.getElementById('feedbackYes').addEventListener('click', () => {
         therapist.provideFeedback(userText, analysis, true);
         feedbackDiv.innerHTML = '<p>Thanks for your feedback!</p>';
@@ -210,8 +236,17 @@
         feedbackDiv.innerHTML = '<p>Thanks for your feedback! I\'ll learn from this.</p>';
       });
 
+      // Clear the input.
       textInput.value = '';
       analyzeBtn.disabled = false;
+    });
+
+    // Enable Enter key (without shift) to trigger analysis.
+    textInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        analyzeBtn.click();
+      }
     });
   </script>
 </body>
